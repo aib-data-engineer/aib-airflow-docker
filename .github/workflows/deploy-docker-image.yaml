@@ -1,0 +1,30 @@
+name: Push Blog Image to Dockerhub
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+  DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  DOCKER_HUB_USERNAME: aibcontents
+  REPOSITORY_NAME: aib-airflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Install buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          buildx-version: latest
+      - name: Login to Docker
+        run: docker login --username=$DOCKER_HUB_USERNAME --password=$DOCKER_HUB_PASSWORD
+      - name: Build and push new Image
+        run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t $DOCKER_HUB_USERNAME/$REPOSITORY_NAME:$IMAGE_TAG --push .
+      - name: Build and Push Latest Image
+        run: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t $DOCKER_HUB_USERNAME/$REPOSITORY_NAME:latest --push .
